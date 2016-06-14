@@ -139,48 +139,76 @@ storeLocator.prototype.loadApi = function(){
 }
 
 //add stores to the map
-
-storeLocator.prototype.addStoresToMap = function(response){
-
+storeLocator.prototype.addStoresToMap = function(response) {
 	var offsetVal = 4000;
-	
+
+
+	var mapMarkerDefault = url.mapMarkerDefault;
+	var mapMarkerHover = url.mapMarkerHover;
+
+
 	//response = [{lat: 53.7266683,lng: -127.6476206}]
 	var infowindow = new google.maps.InfoWindow();
 
-	//reset map zoom level with first coordinate from the response
+	
+	if(response.length > 0){
+		//reset map zoom level with first coordinate from the response
+		if(response.length === 1){
+			this.setMapObj(response[0].lat, response[0].lng, 11);
+		}else{
+			this.setMapObj(response[0].lat, response[0].lng, 5);
+		}
 
-	this.setMapObj(response[0].lat, response[0].lng, 11);
+	}else{
+		//Resets the map if no stores found
+		this.setMapObj(56.4260545, -115.0927734, 5);
+	}
+	
 
 	$.each(response, function(key, d) {
-		var latLng = new google.maps.LatLng(d.lat, d.lng); 
+		var latLng = new google.maps.LatLng(d.lat, d.lng);
+
 		// Creating a marker and putting it on the map
 		var marker = new google.maps.Marker({
 			//map: map,
-		    position: latLng,
-		    title: d.storeName
-		    //icon:image,
+			position: latLng,
+			title: d.storeName,
+			icon: mapMarkerDefault
 		});
+
 		marker.setMap(map);
+
 		var i;
+
 		google.maps.event.addListener(marker, 'click', (function(marker, i) {
 			var _x = '';
 			return function() {
 
+				_x += '<h3>' + d.storeName + '</h3>';
+				_x += '<p>';
+				_x += '<span itemprop="streetAddress">' + d.address1 + '</span>';
+				_x += '<span itemprop="addressLocality">' + d.city + '</span>';
+				_x += '<span itemprop="addressRegion">' + d.state + '</span> ';
+				_x += '<span itemprop="postalCode">' + d.postalCode + '</span>'; 
+				_x += '</p>';
+				_x += '<a href="tel:'+ d.phone +'">' + d.phone + '</a>';
+				_x += '<div><a href="https://maps.google.com/?q='+ d.lat +','+ d.lng +'" target="_blank">GET DIRECTIONS</a></div>';
+
 				//talk to nicki to add correct markup
-				_x += d.address1;
-				_x += d.city;
-				_x += d.state;
-				_x += d.postalCode;
-				
-				//talk to nicki to add correct markup
-				infowindow.setContent('<div>'+ _x +'</div>');
+				infowindow.setContent('<div>' + _x + '</div>');
 				infowindow.open(map, marker);
-			}
+			};
 		})(marker, i));
 
-	});
+		google.maps.event.addListener(marker, 'mouseover', function() {
+			marker.setIcon(mapMarkerHover);
+		});
+		google.maps.event.addListener(marker, 'mouseout', function() {
+			marker.setIcon(mapMarkerDefault);
+		});
 
-}
+	});
+};
 
 storeLocator.prototype.serializeForm = function(obj){
 	
